@@ -1,0 +1,347 @@
+---
+title: "Video Game Sales"
+author: "Justin Byun"
+date: "1/6/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+Video games were an entertainment source that were first created in the 1950's and 1960's. However, it was only in the 1970's during which the first consumer-ready video game hardware was ready for release, the console known as the "Magnovox Odyssey" and the first video games, Pong and Computer Space. Since then, video games have exploded in popularity, bringing in a total worldwide revenue of 175.8 billion dollars in 2021 when considering PC, console, and mobile games together.
+
+# Objective
+
+The dataset we will be looking at in this project will contain data on video games with sales specifically greater than 100,000 copies. Using this dataset, we will answer the following questions below:
+
+1. Which video game genres sell the most, across all platforms and regions? Do certain regions like different genres more or less?
+
+2. In each region, which publishers have the greatest sales? Which publishers have the greatest sales worldwide? 
+
+3. During which years did video games have the greatest sales? (Provide a visualization to graphically represent the change in sales over the years)
+
+4. For each decade present in the data set, what platforms had the most video game sales? What was the best-selling game of each decade?
+
+# Loading in packages
+```{r, warning = FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+# Loading in the data
+```{r}
+vgSalesData <- read_csv('vgsales.csv')
+```
+
+# Taking a look into dimensions of dataset and data types of variables
+```{r}
+glimpse(vgSalesData)
+```
+
+```{r}
+# Grouping the data entries based on the "Genre" variable and finding global sales
+# for each genre
+salesbyGenre <- vgSalesData %>%
+  group_by(Genre) %>%
+  summarize(
+    totalSales = sum(Global_Sales)
+  )
+```
+
+```{r}
+# Creating a bar chart to visualize global sales for each genre
+salesbyGenre %>%
+  ggplot(aes(x = Genre, y = totalSales)) +
+  geom_bar(stat = 'identity') +
+  labs(
+    x = 'Genre',
+    y = 'Total Sales (in millions)',
+    title = 'Total Sales by Genre (in millions)'
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45)
+  )
+```
+
+```{r}
+# Grouping the dataset by genre, and then focusing on NA, EU, and JP sales separately
+naSalesbyGenre <- vgSalesData %>%
+  group_by(Genre) %>%
+  summarize(naSales = sum(NA_Sales))
+
+euSalesbyGenre <- vgSalesData %>%
+  group_by(Genre) %>%
+  summarize(euSales = sum(EU_Sales))
+
+jpSalesbyGenre <- vgSalesData %>%
+  group_by(Genre) %>%
+  summarize(jpSales = sum(JP_Sales))
+```
+
+```{r}
+# Creating a bar chart for NA, EU, and JP to visualize the total sales of each
+# genre in those regions
+naSalesbyGenre %>%
+  ggplot(aes(x = Genre, y = naSales)) +
+  geom_bar(stat = 'identity') +
+  labs(
+    x = 'Genre',
+    y = 'Total Sales (in millions)',
+    title = 'Total Sales in NA by Genre (in millions)'
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45)
+  )
+
+euSalesbyGenre %>%
+  ggplot(aes(x = Genre, y = euSales)) +
+  geom_bar(stat = 'identity') +
+  labs(
+    x = 'Genre',
+    y = 'Total Sales (in millions)',
+    title = 'Total Sales in EU by Genre (in millions)'
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45)
+  )
+
+jpSalesbyGenre %>%
+  ggplot(aes(x = Genre, y = jpSales)) +
+  geom_bar(stat = 'identity') +
+  labs(
+    x = 'Genre',
+    y = 'Total Sales (in millions)',
+    title = 'Total Sales in JP by Genre (in millions)'
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45)
+  )
+```
+
+```{r}
+# Finding total video game sales by publisher worldwide and in specific regions
+salesByPublisher <- vgSalesData %>%
+  group_by(Publisher) %>%
+  summarize(globalPublisherSales = sum(Global_Sales),
+            naPublisherSales = sum(NA_Sales),
+            euPublisherSales = sum(EU_Sales),
+            jpPublisherSales = sum(JP_Sales),
+            otherPublisherSales = sum(Other_Sales))
+
+# Finding publishers with greatest worldwide sales by arrange dataframe in
+# descending order of globalPublisherSales
+salesByPublisher %>%  
+  arrange(desc(globalPublisherSales)) %>%
+  select(Publisher, globalPublisherSales)
+
+# Finding publishers with greatest NA sales by arranging dataframe in descending
+# order of naPublisherSales
+salesByPublisher %>%
+  arrange(desc(naPublisherSales)) %>%
+  select(Publisher, naPublisherSales)
+
+# Finding publishers with greatest EU sales by arranging dataframe in descending
+# order of euPublisherSales
+salesByPublisher %>%
+  arrange(desc(euPublisherSales)) %>%
+  select(Publisher, euPublisherSales)
+
+# Finding publishers with greatest JP sales by arranging dataframe in descending
+# order of jpPublisherSales
+salesByPublisher %>%
+  arrange(desc(jpPublisherSales)) %>%
+  select(Publisher, jpPublisherSales)
+
+# Finding publishers with greatest Other sales by arranging dataframe in descending
+# order of otherPublisherSales
+salesByPublisher %>%
+  arrange(desc(otherPublisherSales)) %>%
+  select(Publisher, otherPublisherSales)
+```
+
+```{r}
+# Converting Year column into integer type
+vgSalesData$Year <- as.integer(vgSalesData$Year)
+```
+
+```{r}
+glimpse(vgSalesData)
+```
+
+```{r}
+# Re-arranging the data set to observe which year the oldest video games
+# in the data set were created
+arrange(vgSalesData, Year)
+
+# Finding out when the latest games in the data set were made
+max(vgSalesData$Year, na.rm = TRUE)
+```
+
+```{r}
+# Filtering for data entries that have the years 1980 to 1989
+firstDecade <- vgSalesData %>%
+  filter(Year >= 1980 & Year <= 1989)
+
+# Finding the best-selling game from 1980 to 1989
+firstDecade %>%
+  arrange(desc(Global_Sales))
+
+# Grouping the firstDecade data entries by platform, and summarizing the sum of
+# each platform's global sales
+firstDecadePlatformSales <- firstDecade %>%
+  group_by(Platform) %>%
+  summarize(
+    platformSales = sum(Global_Sales)
+  )
+```
+
+```{r}
+# Creating bar chart to visualize the amount of sales each platform from 1980 to
+# 1989 had worldwide
+firstDecadePlatformSales %>%
+  ggplot(aes(x = Platform, y = platformSales)) +
+  geom_bar(stat = 'identity') +
+  labs(
+    x = "Platform",
+    y = "Global Sales (in millions)",
+    title = "Global Sales for Each Platform from 1980 to 1989"
+  )
+```
+
+```{r}
+# Filtering for data entries that have the years 1990 to 1999
+secondDecade <- vgSalesData %>%
+  filter(Year >= 1990 & Year <= 1999)
+
+# Finding the best-selling game from 1990 to 1999
+secondDecade %>%
+  arrange(desc(Global_Sales))
+
+# Grouping the secondDecade data entries by platform, and summarizing the sum of
+# each platform's global sales
+secondDecadePlatformSales <- secondDecade %>%
+  group_by(Platform) %>%
+  summarize(
+    platformSales = sum(Global_Sales)
+  )
+```
+
+```{r}
+# Creating bar chart to visualize the amount of sales each platform from 1990 to
+# 1999 had worldwide
+secondDecadePlatformSales %>%
+  ggplot(aes(x = Platform, y = platformSales)) +
+  geom_bar(stat = 'identity') +
+  labs(
+    x = "Platform",
+    y = "Global Sales (in millions)",
+    title = "Global Sales for Each Platform from 1990 to 1999"
+  )
+```
+
+```{r}
+# Filtering for data entries that have the years 2000 to 2009
+thirdDecade <- vgSalesData %>%
+  filter(Year >= 2000 & Year <= 2009)
+
+# Finding the best-selling game from 2000 to 2009
+thirdDecade %>%
+  arrange(desc(Global_Sales))
+
+# Grouping the thirdDecade data entries by platform, and summarizing the sum of
+# each platform's global sales
+thirdDecadePlatformSales <- thirdDecade %>%
+  group_by(Platform) %>%
+  summarize(
+    platformSales = sum(Global_Sales)
+  )
+```
+
+```{r}
+# Creating bar chart to visualize the amount of sales each platform from 2000 to
+# 2009 had worldwide
+thirdDecadePlatformSales %>%
+  ggplot(aes(x = Platform, y = platformSales)) +
+  geom_bar(stat = 'identity') +
+  labs(
+    x = "Platform",
+    y = "Global Sales (in millions)",
+    title = "Global Sales for Each Platform from 2000 to 2009"
+  )
+```
+
+```{r}
+# Filtering for data entries that have the years 2010 to 2019
+lastDecade <- vgSalesData %>%
+  filter(Year >= 2010 & Year <= 2019)
+
+# Combining sales of games that were on more than one platform
+lastDecadeCombined <- lastDecade %>%
+  group_by(Name) %>%
+  summarize(
+    NA_Sales = sum(NA_Sales),
+    EU_Sales = sum(EU_Sales),
+    JP_Sales = sum(JP_Sales),
+    Other_Sales = sum(Other_Sales),
+    Global_Sales = sum(Global_Sales)
+  )
+
+
+# Finding the best-selling game from 2010-2020
+lastDecadeCombined %>%
+  arrange(desc(Global_Sales))
+
+# Grouping the lastDecade data entries by platform, and summarizing the sum of
+# each platform's global sales
+lastDecadePlatformSales <- lastDecade %>%
+  group_by(Platform) %>%
+  summarize(
+    platformSales = sum(Global_Sales)
+  )
+```
+
+```{r}
+# Creating bar chart to visualize the amount of sales each platform from 2010 to
+# 2019 had worldwide
+lastDecadePlatformSales %>%
+  ggplot(aes(x = Platform, y = platformSales)) +
+  geom_bar(stat = 'identity') +
+  labs(
+    x = "Platform",
+    y = "Global Sales (in millions)",
+    title = "Global Sales for Each Platform from 2010 to 2019"
+  )
+```
+
+```{r}
+# Grouping data entries in original data set by year, and then finding global sales
+# for each year
+globalSalesByYear <- vgSalesData %>%
+  group_by(Year) %>%
+  summarize(
+    yearlyGlobalSales = sum(Global_Sales)
+  )
+```
+
+```{r}
+# Creating line graph to represent yearly global sales from 1980 to 2020
+globalSalesByYear %>%
+  ggplot(aes(x = Year, y = yearlyGlobalSales)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    y = 'Global Sales (in millions)',
+    title = 'Yearly Global Sales from 1980 to 2020 (in millions)'
+  )
+```
+
+# Summary Report
+The video game genres that sell the most across all platforms and regions are Action (1751.18 million), Sports (1330.93 million), and Shooters (1037.37 million). Both the NA and EU regions follow this worldwide trend, with Action, Sports, and Shooter video games selling the most there. But the case is highly different in the JP region, where Role-Playing Games (RPG's) take heavy precedence over all other video game genres. After RPG's, Action and Sports games sell the most.
+
+From a global perspective, the publisher that has the most video game sales is Nintendo. In the NA, EU, and JP regions, Nintendo also takes first place for greatest number of video game sales. In other regions of the world, however, Electronic Arts (EA) has the most video game sales.
+
+The year with the greatest video game sales is 2008, with 678.90 million sales total. It seems that from 2000 to around 2008, the yearly global sales of video games greatly increased, before dropping off starting 2009 and onward. 
+
+In the 1980's, the platform with the greatest video game sales was the NES (223.52 million), and the best-selling game of that decade was Super Mario Bros (40.24 million). In the 1990's, the platform with the highest video game sales was the PS or Playstation, while the best-selling game of that decade was Pokemon Red/Pokemon Blue. From 2000 to 2009, the platform with the highest video game sales was the PS2, and the best-selling video game of the decade Wii Sports. For 2010-2020, the PS3 had the greatest game sales, and the best-selling game was Grand Theft Auto V. 
